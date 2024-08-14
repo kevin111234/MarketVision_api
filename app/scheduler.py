@@ -4,27 +4,27 @@ from .tasks import dollar_rate, ticker_update, stock_data_update, stock_index_up
 from .database import get_db
 
 def start_scheduler():
-    scheduler = BackgroundScheduler()
+  scheduler = BackgroundScheduler()
 
-    db_session = next(get_db())
+  db_session = next(get_db())
 
-    # 환율 데이터 업데이트 작업 - 매일 오전 2시에 실행
-    scheduler.add_job(dollar_rate, CronTrigger(hour=2, minute=0), args=[db_session], id="dollar_rate")
+  # 환율 데이터 업데이트 작업 - 매일 오후 1시에 실행
+  scheduler.add_job(dollar_rate, CronTrigger(hour=13, minute=0), args=[db_session], id="dollar_rate")
 
-    # 주식 티커 데이터 업데이트 작업 - 매일 오전 3시에 실행
-    scheduler.add_job(ticker_update, CronTrigger(hour=3, minute=0), args=[db_session], id="ticker_update")
+  # 달러 인덱스 데이터 업데이트 작업 - 매일 오후 1시에 실행
+  scheduler.add_job(update_dollar_index, CronTrigger(hour=13, minute=0), args=[db_session], id="dollar_index")
 
-    # 주식 데이터 업데이트 작업 - 매일 오전 4시에 실행
-    scheduler.add_job(stock_data_update, CronTrigger(hour=4, minute=0), args=[db_session], id="stock_data_update")
+  # 원자재 데이터 업데이트 작업 - 매일 오후 1시 30분에 실행
+  scheduler.add_job(commodity_data_update, CronTrigger(hour=13, minute=30), args=[db_session], id="commodity_data_update")
 
-    # 주식 인덱스 데이터 업데이트 작업 - 매일 오전 5시에 실행
-    scheduler.add_job(stock_index_update, CronTrigger(hour=5, minute=0), args=[db_session], id="stock_index_update")
+  # 주식 티커 데이터 업데이트 작업 - 매일 오후 2시에 실행
+  scheduler.add_job(ticker_update, CronTrigger(hour=14, minute=0), args=[db_session], id="ticker_update")
 
-    # 원자재 데이터 업데이트 작업 - 매일 오전 6시에 실행
-    scheduler.add_job(commodity_data_update, CronTrigger(hour=6, minute=0), args=[db_session], id="commodity_data_update")
+  # 주식 데이터 업데이트 작업 - 매일 오후 2시 30분에 실행
+  scheduler.add_job(stock_data_update, CronTrigger(hour=14, minute=30), args=[db_session], id="stock_data_update")
 
-    # 달러 인덱스 데이터 업데이트 작업 - 매일 오전 7시에 실행
-    scheduler.add_job(update_dollar_index, CronTrigger(hour=7, minute=0), args=[db_session], id="update_dollar_index")
+  # 주식 인덱스 데이터 업데이트 작업 - 매일 오후 4시에 실행
+  scheduler.add_job(stock_index_update, CronTrigger(hour=16, minute=0), args=[db_session], id="stock_index_update")
 
-    scheduler.start()
-    print("Scheduler started and jobs added!")
+  scheduler.start()
+  print("Scheduler started and jobs added!")
