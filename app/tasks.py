@@ -30,6 +30,28 @@ def dollar_rate(db: Session):
     for base_currency, target_currency, fred_symbol in pairs:
         update_exchange_rate(db, base_currency, target_currency, fred_symbol)
 
+def update_dollar_index(db: Session):
+    print("Updating Dollar Index data...")
+    try:
+        # 데이터베이스에서 마지막 저장된 날짜를 가져옵니다.
+        last_saved_date = db.query(DollarIndex).order_by(DollarIndex.date.desc()).first()
+        start_date = datetime(2010, 1, 1) if not last_saved_date else last_saved_date.date + timedelta(days=1)
+
+        # FDR을 통해 달러 인덱스 데이터를 가져옵니다.
+        dollar_index_data = fdr.DataReader('DXY', data_source='FED', start=start_date, end=datetime.now())
+
+        for date, data in dollar_index_data.iterrows():
+            db.merge(DollarIndex(
+                date=date.date(),
+                close=data['Close']
+            ))
+
+        db.commit()
+        print("Dollar Index data updated")
+
+    except Exception as e:
+        print(f"Error updating Dollar Index: {e}")
+
 def ticker_update(db: Session):
     print("Updating ticker data...")
     us_stocks = fdr.StockListing('NASDAQ')
