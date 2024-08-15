@@ -21,7 +21,7 @@ headers={'User-Agent': user}
 
 # 날짜 설정
 year = "2024"
-month = "07"
+month = "08"
 day = "11"
 make_date1=year+'.'+month+'.'+day
 make_date2=year+month+day
