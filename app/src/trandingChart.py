@@ -6,8 +6,6 @@ from fake_useragent import UserAgent
 import plotly.express as px
 from collections import Counter
 from konlpy.tag import Hannanum
-from datetime import datetime
-import time
 import FinanceDataReader as fdr
 
 import warnings
@@ -16,13 +14,13 @@ warnings.filterwarnings(action='ignore')
 hannanum = Hannanum() 
 
 df_krx=fdr.StockListing('KRX')
-fu=UserAgent(use_cache_server=True)
+fu=UserAgent()
 user=fu.random
 headers={'User-Agent': user}
 
 stock_name=str(input('종목명을 입력하시오: '))
 
-stock_num=df_krx[df_krx['Name']==stock_name]['Symbol'].values[0]
+stock_num=df_krx[df_krx['Name']==stock_name]['Code'].values[0]
 price=fdr.DataReader(stock_num).reset_index()[['Date','Close']]
 
 columns=['Date','Close']+[ 'Top'+ str(i) for i in range(1,11)] + [ 'Main_News'+ str(i) for i in range(1,11)]
@@ -77,7 +75,7 @@ def news_collector(search, media, make_date1, make_date2):
                     content = re.sub('<.*?>', '', content)
                     content=content.replace("\n", '')
                     content=content.replace("\t", '')
-                    content=re.sub('[-=+,#/\?:^$.@*\"※~&%ㆍ!』\\‘|\(\)\[\]\<\>`\'…》]', '', content)
+                    content = re.sub(r'[-=+,#/\?:^$.@*\"※~&%ㆍ!』\\‘|\(\)\[\]\<\>`\'…》]', '', content)
                     news_list.append(content) # 네이버 뉴스 본문 담기
 
         
