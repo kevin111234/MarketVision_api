@@ -11,7 +11,6 @@ from datetime import datetime, timedelta
 
 import warnings
 warnings.filterwarnings(action='ignore')
-stock_name = "삼성전자"
 
 hannanum = Hannanum() 
 
@@ -59,7 +58,7 @@ def news_collector(search, media, make_date1, make_date2):
 
 
 # 날짜 설정
-def each_day_news():
+def each_day_news(keyword):
   date = datetime.now()
   make_date1=date.strftime('%Y.%m.%d')
   make_date2=date.strftime('%Y%m%d')
@@ -70,10 +69,10 @@ def each_day_news():
   # 한국경제: 1015
   # 헤럴드경제: 1016
 
-  Maeil_economy=news_collector(stock_name, "1009", make_date1, make_date2)
-  Edaily=news_collector(stock_name, "1018", make_date1, make_date2)
-  Korea_economy=news_collector(stock_name, "1015", make_date1, make_date2)
-  Herald_economy=news_collector(stock_name, "1016", make_date1, make_date2)
+  Maeil_economy=news_collector(keyword, "1009", make_date1, make_date2)
+  Edaily=news_collector(keyword, "1018", make_date1, make_date2)
+  Korea_economy=news_collector(keyword, "1015", make_date1, make_date2)
+  Herald_economy=news_collector(keyword, "1016", make_date1, make_date2)
 
   words_list=[]
   media_s=[Maeil_economy,Edaily, Korea_economy, Herald_economy]
@@ -117,3 +116,6 @@ def each_day_news():
 
   print(top10)
   print(main10)
+
+keyword = input("키워드를 입력해 주세요: ")
+each_day_news(keyword)
