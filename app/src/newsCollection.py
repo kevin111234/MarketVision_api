@@ -7,6 +7,7 @@ import plotly.express as px
 from collections import Counter
 from konlpy.tag import Hannanum
 import FinanceDataReader as fdr
+from datetime import datetime, timedelta
 
 import warnings
 warnings.filterwarnings(action='ignore')
@@ -18,14 +19,6 @@ df_krx=fdr.StockListing('KRX')
 fu=UserAgent()
 user=fu.random
 headers={'User-Agent': user}
-
-# 날짜 설정
-year = "2024"
-month = "08"
-day = "11"
-make_date1=year+'.'+month+'.'+day
-make_date2=year+month+day
-make_date3=year+'-'+month+'-'+day
 
 def news_collector(search, media, make_date1, make_date2):
     part1 = "https://search.naver.com/search.naver?where=news&sm=tab_pge&query="
@@ -64,54 +57,65 @@ def news_collector(search, media, make_date1, make_date2):
     return news_list
 
 
-# 매일경제: 1009
-# 이데일리: 1018
-# 한국경제: 1015
-# 헤럴드경제: 1016
 
-Maeil_economy=news_collector(stock_name, "1009", make_date1, make_date2)
-Edaily=news_collector(stock_name, "1018", make_date1, make_date2)
-Korea_economy=news_collector(stock_name, "1015", make_date1, make_date2)
-Herald_economy=news_collector(stock_name, "1016", make_date1, make_date2)
+# 날짜 설정
+def each_day_news():
+  date = datetime.now()
+  make_date1=date.strftime('%Y.%m.%d')
+  make_date2=date.strftime('%Y%m%d')
+  make_date3=date.strftime('%Y-%m-%d')
 
-words_list=[]
-media_s=[Maeil_economy,Edaily, Korea_economy, Herald_economy]
-words_list = []
-for media in media_s:
-  for article in media:
-    title = article['title']  # 사전에서 제목 추출
-    words_list += hannanum.nouns(title)  # 제목에서 명사 추출
+  # 매일경제: 1009
+  # 이데일리: 1018
+  # 한국경제: 1015
+  # 헤럴드경제: 1016
 
-over2=[ i for i in words_list if len(i) >1 ]
-count=Counter(over2)
-top10=count.most_common(10)
-print(top10)
+  Maeil_economy=news_collector(stock_name, "1009", make_date1, make_date2)
+  Edaily=news_collector(stock_name, "1018", make_date1, make_date2)
+  Korea_economy=news_collector(stock_name, "1015", make_date1, make_date2)
+  Herald_economy=news_collector(stock_name, "1016", make_date1, make_date2)
 
-url="https://finance.naver.com/news/mainnews.naver?date="+make_date3
-req = requests.get(url)
-html=req.text
-soup=bs(html, 'html.parser')
-site_news=soup.select('#contentarea_left > div.mainNewsList._replaceNewsLink > ul > li > dl > dd.articleSubject > a')
+  words_list=[]
+  media_s=[Maeil_economy,Edaily, Korea_economy, Herald_economy]
+  words_list = []
+  for media in media_s:
+    for article in media:
+      title = article['title']  # 사전에서 제목 추출
+      words_list += hannanum.nouns(title)  # 제목에서 명사 추출
 
-main_news=[] # 메인뉴스 제목을 담는 리스트
+  over2=[ i for i in words_list if len(i) >1 ]
+  count=Counter(over2)
+  top10=count.most_common(10)
 
-for news in site_news:
-    content = news.get_text()  # 제목을 추출
-    content = re.sub('<.*?>', '', content)
-    content = content.replace("\n", '')
-    content = content.replace("\t", '')
-    content = re.sub(r'[-=+,#/\?:^$.@*\"※~&%ㆍ!』\\‘|\(\)\[\]\<\>`\'…》]', '', content)
-    content = content.replace("↓", '하락')
-    content = content.replace("↑", '상승')
-    res = content.strip()
-    main_news.append(res)  # 제목을 리스트에 추가
+  url="https://finance.naver.com/news/mainnews.naver?date="+make_date3
+  req = requests.get(url)
+  html=req.text
+  soup=bs(html, 'html.parser')
+  site_news=soup.select('#contentarea_left > div.mainNewsList._replaceNewsLink > ul > li > dl > dd.articleSubject > a')
 
-words_list=[]
-main_news=''.join(main_news)
-words_list=hannanum.nouns(main_news)
+  main_news=[] # 메인뉴스 제목을 담는 리스트
 
-over2=[ i for i in words_list if len(i) >1 ]
+  for news in site_news:
+      content = news.get_text()  # 제목을 추출
+      content = re.sub('<.*?>', '', content)
+      content = content.replace("\n", '')
+      content = content.replace("\t", '')
+      content = re.sub(r'[-=+,#/\?:^$.@*\"※~&%ㆍ!』\\‘|\(\)\[\]\<\>`\'…》]', '', content)
+      content = content.replace("↓", '하락')
+      content = content.replace("↑", '상승')
+      res = content.strip()
+      main_news.append(res)  # 제목을 리스트에 추가
 
-count=Counter(over2)
-main10=count.most_common(10)
-print(main10)
+  words_list=[]
+  main_news=''.join(main_news)
+  words_list=hannanum.nouns(main_news)
+
+  over2=[ i for i in words_list if len(i) >1 ]
+
+  count=Counter(over2)
+  main10=count.most_common(10)
+
+  print(top10)
+  print(main10)
+
+each_day_news()
