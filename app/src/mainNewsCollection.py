@@ -41,12 +41,13 @@ def get_market_news(search_query, date=None):
     return news_list
 
 # 뉴스 추출 및 출력
-keyword = input("키워드를 입력해주세요: ")
+if __name__ == "__main__":
+  keyword = input("키워드를 입력해주세요: ")
 
-market_news = get_market_news(keyword)
-if market_news:
+  market_news = get_market_news(keyword)
+  if market_news:
     for index, news in enumerate(market_news):
-        print(f"{index + 1}: {news['title']}")
-        print(f"Link: {news['link']}\n")
-else:
+      print(f"{index + 1}: {news['title']}")
+      print(f"Link: {news['link']}\n")
+  else:
     print("No recent news found.")
