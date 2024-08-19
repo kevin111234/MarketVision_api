@@ -113,10 +113,9 @@ def each_day_news(keyword, date):
   count=Counter(over2)
   main10=count.most_common(10)
 
-  print(top10)
-  print(main10)
+  return top10, main10
 
 if __name__ == "__main__":
   date = datetime.now()
   keyword = input("키워드를 입력해 주세요: ")
-  each_day_news(keyword, date)
+  print(each_day_news(keyword, date))
