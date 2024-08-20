@@ -85,9 +85,37 @@ def each_day_news(keyword, date):
   count=Counter(over2)
   top10=count.most_common(10)
 
-  print(top10)
+  url="https://finance.naver.com/news/news_list.naver?mode=LSS3D&section_id=101&section_id2=258&section_id3=403&date="+make_date2
+  req = requests.get(url)
+  html=req.text
+  soup=bs(html, 'html.parser')
+  site_news=soup.select('.articleSubject a')
+
+  main_news=[] # 메인뉴스 제목을 담는 리스트
+
+  for news in site_news:
+      content = news.get_text()  # 제목을 추출
+      content = re.sub('<.*?>', '', content)
+      content = content.replace("\n", '')
+      content = content.replace("\t", '')
+      content = re.sub(r'[-=+,#/\?:^$.@*\"※~&%ㆍ!』\\‘|\(\)\[\]\<\>`\'…》]', '', content)
+      content = content.replace("↓", '하락')
+      content = content.replace("↑", '상승')
+      res = content.strip()
+      main_news.append(res)  # 제목을 리스트에 추가
+
+  words_list=[]
+  main_news=''.join(main_news)
+  words_list=hannanum.nouns(main_news)
+
+  over2=[ i for i in words_list if len(i) >1 ]
+
+  count=Counter(over2)
+  main10=count.most_common(10)
+
+  return top10, main10
 
 if __name__ == "__main__":
   date = datetime.now()
   keyword = input("키워드를 입력해 주세요: ")
-  each_day_news(keyword, date)
+  print(each_day_news(keyword, date))
