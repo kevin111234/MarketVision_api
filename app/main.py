@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from .database import engine
 from . import models, scheduler
 from typing import List, Dict
-from .src import allNewsCollection, mainNewsCollection, mainNewsKeyword
+from .src import allNewsCollection, mainNewsCollection
 from .routers import stock_index_graph
 
 app = FastAPI()
