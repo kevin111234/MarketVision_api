@@ -14,3 +14,4 @@ fake_useragent == 1.5.1
 konlpy == 0.6.0
 datetime == 5.5
 pandas == 2.2.2
+JPype1 == 1.5.0
