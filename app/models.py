@@ -7,7 +7,7 @@ class User(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     email = Column(String(50), unique=True, nullable=False)
-    password = Column(String, nullable=False)
+    password = Column(String(255), nullable=False)  # 길이를 255로 지정
     name = Column(String(50), nullable=True)
     createdAt = Column(DateTime(timezone=True), server_default=func.now())
     updatedAt = Column(DateTime(timezone=True), onupdate=func.now())
