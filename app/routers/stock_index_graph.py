@@ -4,14 +4,14 @@ import plotly
 import plotly.graph_objs as go
 from plotly.subplots import make_subplots
 import json
-from ..src.stock_index_service import get_stock_data
+from ..src import stock_index_service
 from ..database import get_db
 
 router = APIRouter()
 
 @router.get("/stock-index/{index_id}/data")
 def get_stock_index_data(index_id: int, months: int = 3, db: Session = Depends(get_db)):
-    data = get_stock_data(db, index_id, months)
+    data = stock_index_service.get_stock_data(db, index_id, months)
 
     if not data:
         raise HTTPException(status_code=404, detail="Data not found")
