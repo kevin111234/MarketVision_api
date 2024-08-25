@@ -4,6 +4,9 @@ from sqlalchemy.orm import Session
 from datetime import datetime, timedelta
 import FinanceDataReader as fdr
 import requests
+from dotenv import load_dotenv
+import os
+import pandas as pd
 
 def update_exchange_rate(db: Session, base_currency: str, target_currency: str, fred_symbol: str):
     print(f"Updating exchange rate: {base_currency}/{target_currency}")
@@ -48,13 +51,15 @@ def update_dollar_index():
         last_saved_date = db.query(DollarIndex).order_by(DollarIndex.date.desc()).first()
         start_date = datetime(2010, 1, 1) if not last_saved_date else last_saved_date.date + timedelta(days=1)
 
-        dollar_index_data = fdr.DataReader('DXY', data_source='FED', start=start_date, end=datetime.now())
+        dollar_index_data = fdr.DataReader('FED:DXY', start=start_date, end=datetime.now())
 
         for date, data in dollar_index_data.iterrows():
-            db.merge(DollarIndex(
-                date=date.date(),
-                close=data['Close']
-            ))
+            close_value = data['Close']
+            if not pd.isna(close_value):  # NaN 값을 걸러냅니다.
+                db.merge(DollarIndex(
+                    date=date.date(),
+                    close=close_value
+                ))
 
         db.commit()
         print("Dollar Index data updated")
@@ -230,7 +235,7 @@ def commodity_data_update():
 
             last_saved_date = db.query(HistoricalCommodityData).filter_by(commodity_id=commodity.id).order_by(HistoricalCommodityData.date.desc()).first()
             start_date = datetime(2010, 1, 1) if not last_saved_date else last_saved_date.date + timedelta(days=1)
-            commodity_data = fdr.DataReader(commodity.symbol, data_source='COMMODITY', start=start_date, end=datetime.now())
+            commodity_data = fdr.DataReader(f"COMMODITY:{commodity.symbol}", start=start_date, end=datetime.now())
             for date, data in commodity_data.iterrows():
                 historical_commodity_data = db.query(HistoricalCommodityData).filter_by(commodity_id=commodity.id, date=date.date()).first()
                 if historical_commodity_data:
@@ -275,7 +280,8 @@ def update_economic_indicators():
     db = next(get_db())
     print("Updating Economic Indicators data...")
     try:
-        api_key = "YOUR_FRED_API_KEY"
+        load_dotenv()
+        api_key = os.getenv('FRED_API')
         indicators = [
             {'type': 'Interest Rate', 'series_id': 'DFF'},
             {'type': 'CPI', 'series_id': 'CPIAUCSL'},
@@ -290,11 +296,16 @@ def update_economic_indicators():
 
             data = fetch_economic_data(api_key, indicator['series_id'], start_date, end_date)
             for date, value in data:
-                db.merge(EconomicIndicator(
-                    indicator_type=indicator['type'],
-                    date=date,
-                    value=value
-                ))
+                existing_record = db.query(EconomicIndicator).filter_by(indicator_type=indicator['type'], date=date).first()
+                if existing_record:
+                    existing_record.value = value  # 중복된 경우 값을 업데이트
+                else:
+                    new_record = EconomicIndicator(
+                        indicator_type=indicator['type'],
+                        date=date,
+                        value=value
+                    )
+                    db.add(new_record)  # 중복되지 않는 경우 새로 추가
             db.commit()
         print("Economic Indicators data updated")
     except Exception as e:
