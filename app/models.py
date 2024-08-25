@@ -112,3 +112,13 @@ class DollarIndex(Base):
     id = Column(Integer, primary_key=True, index=True)
     date = Column(Date, unique=True, nullable=False)
     close = Column(Float, nullable=False)
+
+class EconomicIndicator(Base):
+    __tablename__ = 'EconomicIndicator'
+
+    id = Column(Integer, primary_key=True, index=True)
+    indicator_type = Column(String(50), nullable=False)
+    date = Column(Date, nullable=False)
+    value = Column(Float, nullable=False)
+
+    __table_args__ = (UniqueConstraint('indicator_type', 'date', name='indicator_date_uc'),)
