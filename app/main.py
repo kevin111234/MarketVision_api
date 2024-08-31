@@ -3,7 +3,7 @@ from .database import engine
 from . import models, scheduler
 from typing import List, Dict
 from .src import allNewsCollection, mainNewsCollection
-from .routers import stock_index_graph, exchangeRate_live
+from .routers import stock_index_graph, exchangeRate_live, stock_graph, commodity_graph, exchange_rate_graph
 
 app = FastAPI()
 
@@ -24,6 +24,9 @@ def fetch_us_stock_news():
 
 app.include_router(stock_index_graph.router)
 app.include_router(exchangeRate_live.router)
+app.include_router(stock_graph.router)
+app.include_router(commodity_graph.router)
+app.include_router(exchange_rate_graph.router)
 
 # 아래 코드로 서버 실행
 # uvicorn app.main:app --reload
