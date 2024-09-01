@@ -7,6 +7,7 @@ import requests
 from dotenv import load_dotenv
 import os
 import pandas as pd
+from sqlalchemy.sql import text
 
 def update_exchange_rate(db: Session, base_currency: str, target_currency: str, fred_symbol: str):
     print(f"Updating exchange rate: {base_currency}/{target_currency}")
@@ -22,11 +23,12 @@ def update_exchange_rate(db: Session, base_currency: str, target_currency: str, 
             try:
                 # UPDATE 옵션을 활용하여 중복 데이터 처리
                 db.execute(
+                  text(
                     """
                     INSERT INTO ExchangeRate (base_currency, target_currency, date, close)
                     VALUES (:base_currency, :target_currency, :date, :close)
                     ON DUPLICATE KEY UPDATE close = :close
-                    """,
+                    """),
                     {
                         'base_currency': base_currency,
                         'target_currency': target_currency,

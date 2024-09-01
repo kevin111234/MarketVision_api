@@ -8,17 +8,17 @@ def start_scheduler():
   # 환율 데이터 업데이트 작업 - 매일 오후 1시에 실행
   scheduler.add_job(dollar_rate, CronTrigger(hour=13, minute=0), id="dollar_rate")
   # 5분마다 실행
-  scheduler.add_job(dollar_rate, CronTrigger(minute='*/5'), id="dollar_rate_every_5min")
+  # scheduler.add_job(dollar_rate, CronTrigger(minute='*/5'), id="dollar_rate_every_5min")
 
   # 달러 인덱스 데이터 업데이트 작업 - 매일 오후 1시에 실행
   scheduler.add_job(update_dollar_index, CronTrigger(hour=13, minute=0), id="dollar_index")
   # 5분마다 실행
-  scheduler.add_job(update_dollar_index, CronTrigger(minute='*/5'), id="dollar_index_every_5min")
+  # scheduler.add_job(update_dollar_index, CronTrigger(minute='*/5'), id="dollar_index_every_5min")
 
   # 원자재 데이터 업데이트 작업 - 매일 오후 1시 30분에 실행
   scheduler.add_job(commodity_data_update, CronTrigger(hour=13, minute=30), id="commodity_data_update")
   # 5분마다 실행
-  scheduler.add_job(commodity_data_update, CronTrigger(minute='*/5'), id="commodity_data_update_every_5min")
+  # scheduler.add_job(commodity_data_update, CronTrigger(minute='*/5'), id="commodity_data_update_every_5min")
 
   # 주식 티커 데이터 업데이트 작업 - 매일 오후 2시에 실행
   scheduler.add_job(ticker_update, CronTrigger(hour=14, minute=0), id="ticker_update")
