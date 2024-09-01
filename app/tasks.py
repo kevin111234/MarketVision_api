@@ -9,6 +9,8 @@ import os
 import pandas as pd
 from sqlalchemy.sql import text
 import pandas_datareader as pdr
+from .src import financial_data_service
+from .database import SessionLocal
 
 def update_exchange_rate(db: Session, base_currency: str, target_currency: str, fred_symbol: str):
     print(f"Updating exchange rate: {base_currency}/{target_currency}")
@@ -442,5 +444,26 @@ def update_economic_indicators():
     except Exception as e:
         db.rollback()
         print(f"Error updating Economic Indicators: {e}")
+    finally:
+        db.close()
+
+def update_all_financial_data_task():
+    """
+    모든 주식의 재무 데이터를 수집하여 데이터베이스에 저장하는 작업.
+    """
+    db: Session = SessionLocal()
+    try:
+        # Stock 테이블에서 모든 주식 티커 가져오기
+        stocks = db.query(Stock).all()
+        for stock in stocks:
+            try:
+                # 각 주식에 대한 재무 데이터 수집 및 저장
+                data = financial_data_service.fetch_financial_data(stock.symbol)
+                financial_data_service.save_financial_data(db, stock.symbol, data)
+                print(f"Financial data for {stock.symbol} updated successfully.")
+            except Exception as e:
+                print(f"Error updating financial data for {stock.symbol}: {e}")
+    except Exception as e:
+        print(f"Error updating all financial data: {e}")
     finally:
         db.close()

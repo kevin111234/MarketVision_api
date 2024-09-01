@@ -1,6 +1,6 @@
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.cron import CronTrigger
-from .tasks import dollar_rate, ticker_update, stock_data_update, stock_index_update, update_dollar_index, update_economic_indicators # , commodity_data_update
+from .tasks import dollar_rate, ticker_update, stock_data_update, stock_index_update, update_dollar_index, update_economic_indicators, update_all_financial_data_task # , commodity_data_update
 
 def start_scheduler():
   scheduler = BackgroundScheduler()
@@ -39,6 +39,9 @@ def start_scheduler():
   scheduler.add_job(update_economic_indicators, CronTrigger(hour=17, minute=0), id="economic_indicators_update")
   # 5분마다 실행
   # scheduler.add_job(update_economic_indicators, CronTrigger(minute='*/5'), id="economic_indicators_update_every_5min")
+
+  # 모든 주식에 대한 재무 데이터 업데이트 작업 - 매주 일요일 오후 5시에 실행
+  scheduler.add_job(update_all_financial_data_task, CronTrigger(day_of_week='sun', hour=17, minute=0), id="financial_data_update")
 
   scheduler.start()
   print("Scheduler started and jobs added!")
