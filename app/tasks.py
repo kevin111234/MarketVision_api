@@ -8,6 +8,7 @@ from dotenv import load_dotenv
 import os
 import pandas as pd
 from sqlalchemy.sql import text
+import pandas_datareader as pdr
 
 def update_exchange_rate(db: Session, base_currency: str, target_currency: str, fred_symbol: str):
     print(f"Updating exchange rate: {base_currency}/{target_currency}")
@@ -301,14 +302,16 @@ def stock_index_update():
 def commodity_data_update():
     db = next(get_db())
     print("Updating commodity data...")
+    
+    # FRED에서 사용할 수 있는 원자재 심볼 (FRED의 코드로 교체 필요)
     commodities = [
-        {'symbol': 'GC', 'name': 'Gold'},
-        {'symbol': 'SI', 'name': 'Silver'},
-        {'symbol': 'CL', 'name': 'Crude Oil'},
-        {'symbol': 'NG', 'name': 'Natural Gas'},
-        {'symbol': 'HG', 'name': 'Copper'},
-        {'symbol': 'PL', 'name': 'Platinum'},
-        {'symbol': 'PA', 'name': 'Palladium'}
+        {'symbol': 'GOLDAMGBD228NLBM', 'name': 'Gold'},  # Gold
+        {'symbol': 'SILVERPRICE', 'name': 'Silver'},  # Example symbol, replace with actual FRED code if needed
+        {'symbol': 'DCOILWTICO', 'name': 'Crude Oil'},  # WTI Crude Oil
+        {'symbol': 'DHHNGSP', 'name': 'Natural Gas'},  # Henry Hub Natural Gas Spot Price
+        {'symbol': 'PCOPPUSDM', 'name': 'Copper'},  # Copper (FRED code needs verification)
+        {'symbol': 'PLATINUM', 'name': 'Platinum'},  # Example symbol, replace with actual FRED code if needed
+        {'symbol': 'PALLADIUM', 'name': 'Palladium'}  # Example symbol, replace with actual FRED code if needed
     ]
 
     try:
@@ -316,6 +319,7 @@ def commodity_data_update():
         batch = []
         for commodity_info in commodities:
             try:
+                # 데이터베이스에서 해당 원자재 조회 또는 생성
                 commodity = db.query(Commodity).filter_by(symbol=commodity_info['symbol']).first()
                 if not commodity:
                     commodity = Commodity(
@@ -325,27 +329,26 @@ def commodity_data_update():
                     db.add(commodity)
                     db.commit()
 
+                # 가장 최근 저장된 데이터 날짜 가져오기
                 last_saved_date = db.query(HistoricalCommodityData).filter_by(commodity_id=commodity.id).order_by(HistoricalCommodityData.date.desc()).first()
-                start_date = datetime(2010, 1, 1) if not last_saved_date else last_saved_date.date + timedelta(days=1)
-                commodity_data = fdr.DataReader(f"COMMODITY:{commodity.symbol}", start=start_date, end=datetime.now())
-                for date, data in commodity_data.iterrows():
+                start_date = datetime(2000, 1, 1) if not last_saved_date else last_saved_date.date + timedelta(days=1)
+                
+                # FRED에서 데이터 가져오기
+                commodity_data = pdr.DataReader(commodity.symbol, 'fred', start=start_date, end=datetime.now())
+
+                # 데이터 처리 및 저장
+                for date, row in commodity_data.iterrows():
                     try:
                         historical_commodity_data = db.query(HistoricalCommodityData).filter_by(commodity_id=commodity.id, date=date.date()).first()
                         if historical_commodity_data:
-                            historical_commodity_data.open = data['Open']
-                            historical_commodity_data.high = data['High']
-                            historical_commodity_data.low = data['Low']
-                            historical_commodity_data.close = data['Close']
-                            historical_commodity_data.volume = data.get('Volume', None)
+                            # 이미 존재하는 데이터 업데이트
+                            historical_commodity_data.close = row[commodity.symbol]
                         else:
+                            # 새로운 데이터 추가
                             historical_commodity_data = HistoricalCommodityData(
                                 commodity_id=commodity.id,
                                 date=date.date(),
-                                open=data['Open'],
-                                high=data['High'],
-                                low=data['Low'],
-                                close=data['Close'],
-                                volume=data.get('Volume', None)
+                                close=row[commodity.symbol]
                             )
                             db.add(historical_commodity_data)
                         batch.append(historical_commodity_data)
@@ -358,6 +361,7 @@ def commodity_data_update():
             except Exception as e:
                 print(f"Error saving historical data for {commodity_info['symbol']}: {e}")
 
+        # 남은 배치 커밋
         if batch:
             db.commit()
             print("Final batch committed for commodity data")
