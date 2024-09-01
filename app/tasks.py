@@ -16,7 +16,7 @@ def update_exchange_rate(db: Session, base_currency: str, target_currency: str, 
     print(f"Updating exchange rate: {base_currency}/{target_currency}")
     try:
         last_saved_date = db.query(ExchangeRate).filter_by(base_currency=base_currency, target_currency=target_currency).order_by(ExchangeRate.date.desc()).first()
-        start_date = datetime(2010, 1, 1) if not last_saved_date else last_saved_date.date + timedelta(days=1)
+        start_date = datetime(2000, 1, 1) if not last_saved_date else last_saved_date.date + timedelta(days=1)
         exchange_rate_data = fdr.DataReader(fred_symbol, start=start_date, end=datetime.now())
 
         # 배치 커밋을 위해 리스트를 사용
@@ -78,8 +78,8 @@ def update_dollar_index():
     print("Updating Dollar Index data...")
     try:
         last_saved_date = db.query(DollarIndex).order_by(DollarIndex.date.desc()).first()
-        start_date = datetime(2010, 1, 1) if not last_saved_date else last_saved_date.date + timedelta(days=1)
-        dollar_index_data = fdr.DataReader('FED:DXY', start=start_date, end=datetime.now())
+        start_date = datetime(2000, 1, 1) if not last_saved_date else last_saved_date.date + timedelta(days=1)
+        dollar_index_data = fdr.DataReader('^NYICDX', start=start_date, end=datetime.now())
 
         batch_size = 100
         batch = []
@@ -169,7 +169,7 @@ def stock_data_update():
         for stock in stocks:
             try:
                 last_saved_date = db.query(HistoricalStockData).filter_by(stock_id=stock.id).order_by(HistoricalStockData.date.desc()).first()
-                start_date = datetime(2010, 1, 1) if not last_saved_date else last_saved_date.date + timedelta(days=1)
+                start_date = datetime(2000, 1, 1) if not last_saved_date else last_saved_date.date + timedelta(days=1)
                 stock_data = fdr.DataReader(stock.symbol, start=start_date, end=datetime.now())
 
                 # NaN 값을 포함한 행을 찾아 출력
@@ -259,7 +259,7 @@ def stock_index_update():
                     db.commit()
 
                 last_saved_date = db.query(HistoricalStockIndexData).filter_by(index_id=index.id).order_by(HistoricalStockIndexData.date.desc()).first()
-                start_date = datetime(2010, 1, 1) if not last_saved_date else last_saved_date.date + timedelta(days=1)
+                start_date = datetime(2000, 1, 1) if not last_saved_date else last_saved_date.date + timedelta(days=1)
                 index_data = fdr.DataReader(index.symbol, start=start_date, end=datetime.now())
                 for date, data in index_data.iterrows():
                     try:
@@ -411,7 +411,7 @@ def update_economic_indicators():
         for indicator in indicators:
             try:
                 last_saved_date = db.query(EconomicIndicator).filter_by(indicator_type=indicator['type']).order_by(EconomicIndicator.date.desc()).first()
-                start_date = '2010-01-01' if not last_saved_date else last_saved_date.date + timedelta(days=1)
+                start_date = '2000-01-01' if not last_saved_date else last_saved_date.date + timedelta(days=1)
                 end_date = datetime.now().strftime('%Y-%m-%d')
 
                 data = fetch_economic_data(api_key, indicator['series_id'], start_date, end_date)
@@ -444,26 +444,5 @@ def update_economic_indicators():
     except Exception as e:
         db.rollback()
         print(f"Error updating Economic Indicators: {e}")
-    finally:
-        db.close()
-
-def update_all_financial_data_task():
-    """
-    모든 주식의 재무 데이터를 수집하여 데이터베이스에 저장하는 작업.
-    """
-    db: Session = SessionLocal()
-    try:
-        # Stock 테이블에서 모든 주식 티커 가져오기
-        stocks = db.query(Stock).all()
-        for stock in stocks:
-            try:
-                # 각 주식에 대한 재무 데이터 수집 및 저장
-                data = financial_data_service.fetch_financial_data(stock.symbol)
-                financial_data_service.save_financial_data(db, stock.symbol, data)
-                print(f"Financial data for {stock.symbol} updated successfully.")
-            except Exception as e:
-                print(f"Error updating financial data for {stock.symbol}: {e}")
-    except Exception as e:
-        print(f"Error updating all financial data: {e}")
     finally:
         db.close()
