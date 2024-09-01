@@ -9,7 +9,6 @@ import os
 import pandas as pd
 from sqlalchemy.sql import text
 import pandas_datareader as pdr
-from .src import financial_data_service
 from .database import SessionLocal
 
 def update_exchange_rate(db: Session, base_currency: str, target_currency: str, fred_symbol: str):
