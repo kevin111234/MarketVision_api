@@ -1,5 +1,5 @@
 from .database import get_db
-from .models import Stock, HistoricalStockData, StockIndex, HistoricalStockIndexData, Commodity, HistoricalCommodityData, ExchangeRate, DollarIndex, EconomicIndicator
+from .models import Stock, HistoricalStockData, StockIndex, HistoricalStockIndexData, ExchangeRate, DollarIndex, EconomicIndicator # , Commodity, HistoricalCommodityData
 from sqlalchemy.orm import Session
 from datetime import datetime, timedelta
 import FinanceDataReader as fdr
@@ -299,78 +299,84 @@ def stock_index_update():
     finally:
         db.close()
 
-def commodity_data_update():
-    db = next(get_db())
-    print("Updating commodity data...")
-    
-    # FRED에서 사용할 수 있는 원자재 심볼 (FRED의 코드로 교체 필요)
-    commodities = [
-        {'symbol': 'GOLDAMGBD228NLBM', 'name': 'Gold'},  # Gold
-        {'symbol': 'SILVERPRICE', 'name': 'Silver'},  # Example symbol, replace with actual FRED code if needed
-        {'symbol': 'DCOILWTICO', 'name': 'Crude Oil'},  # WTI Crude Oil
-        {'symbol': 'DHHNGSP', 'name': 'Natural Gas'},  # Henry Hub Natural Gas Spot Price
-        {'symbol': 'PCOPPUSDM', 'name': 'Copper'},  # Copper (FRED code needs verification)
-        {'symbol': 'PLATINUM', 'name': 'Platinum'},  # Example symbol, replace with actual FRED code if needed
-        {'symbol': 'PALLADIUM', 'name': 'Palladium'}  # Example symbol, replace with actual FRED code if needed
-    ]
-
-    try:
-        batch_size = 100
-        batch = []
-        for commodity_info in commodities:
-            try:
-                # 데이터베이스에서 해당 원자재 조회 또는 생성
-                commodity = db.query(Commodity).filter_by(symbol=commodity_info['symbol']).first()
-                if not commodity:
-                    commodity = Commodity(
-                        symbol=commodity_info['symbol'],
-                        name=commodity_info['name']
-                    )
-                    db.add(commodity)
-                    db.commit()
-
-                # 가장 최근 저장된 데이터 날짜 가져오기
-                last_saved_date = db.query(HistoricalCommodityData).filter_by(commodity_id=commodity.id).order_by(HistoricalCommodityData.date.desc()).first()
-                start_date = datetime(2000, 1, 1) if not last_saved_date else last_saved_date.date + timedelta(days=1)
-                
-                # FRED에서 데이터 가져오기
-                commodity_data = pdr.DataReader(commodity.symbol, 'fred', start=start_date, end=datetime.now())
-
-                # 데이터 처리 및 저장
-                for date, row in commodity_data.iterrows():
-                    try:
-                        historical_commodity_data = db.query(HistoricalCommodityData).filter_by(commodity_id=commodity.id, date=date.date()).first()
-                        if historical_commodity_data:
-                            # 이미 존재하는 데이터 업데이트
-                            historical_commodity_data.close = row[commodity.symbol]
-                        else:
-                            # 새로운 데이터 추가
-                            historical_commodity_data = HistoricalCommodityData(
-                                commodity_id=commodity.id,
-                                date=date.date(),
-                                close=row[commodity.symbol]
-                            )
-                            db.add(historical_commodity_data)
-                        batch.append(historical_commodity_data)
-                        if len(batch) >= batch_size:
-                            db.commit()
-                            print(f"Batch committed for {commodity.symbol} commodity data")
-                            batch = []
-                    except Exception as e:
-                        print(f"Error processing {date.date()} for {commodity_info['symbol']}: {e}")
-            except Exception as e:
-                print(f"Error saving historical data for {commodity_info['symbol']}: {e}")
-
-        # 남은 배치 커밋
-        if batch:
-            db.commit()
-            print("Final batch committed for commodity data")
-
-    except Exception as e:
-        db.rollback()
-        print(f"Error updating commodity data: {e}")
-    finally:
-        db.close()
+#def commodity_data_update():
+#    db = next(get_db())
+#    print("Updating commodity data...")
+#    
+#    commodities = [
+#        {'symbol': 'GOLDAMGBD228NLBM', 'name': 'Gold'},
+#        {'symbol': 'SILVERPRICE', 'name': 'Silver'},
+#        {'symbol': 'DCOILWTICO', 'name': 'Crude Oil'},
+#        {'symbol': 'DHHNGSP', 'name': 'Natural Gas'},
+#        {'symbol': 'PCOPPUSDM', 'name': 'Copper'},
+#        {'symbol': 'PLATINUM', 'name': 'Platinum'},
+#        {'symbol': 'PALLADIUM', 'name': 'Palladium'}
+#    ]
+#
+#    try:
+#        batch_size = 100
+#        batch = []
+#        for commodity_info in commodities:
+#            try:
+#                commodity = db.query(Commodity).filter_by(symbol=commodity_info['symbol']).first()
+#                if not commodity:
+#                    commodity = Commodity(
+#                        symbol=commodity_info['symbol'],
+#                        name=commodity_info['name']
+#                    )
+#                    db.add(commodity)
+#                    db.commit()
+#
+#                last_saved_date = db.query(HistoricalCommodityData).filter_by(commodity_id=commodity.id).order_by(HistoricalCommodityData.date.desc()).first()
+#                start_date = datetime(2000, 1, 1) if not last_saved_date else last_saved_date.date + timedelta(days=1)
+#                
+#                # FRED에서 데이터 가져오기
+#                commodity_data = pdr.DataReader(commodity.symbol, 'fred', start=start_date, end=datetime.now())
+#
+#                # NaN 값을 포함한 행 찾기
+#                nan_rows = commodity_data[commodity_data.isna().any(axis=1)]
+#                if not nan_rows.empty:
+#                    print(f"NaN 값을 포함한 행이 발견되었습니다: {commodity_info['symbol']}")
+#                    print(nan_rows)
+#
+#                # NaN 값을 포함한 행 제거
+#                commodity_data = commodity_data.dropna()
+#
+#                # 데이터 처리 및 저장
+#                for date, row in commodity_data.iterrows():
+#                    try:
+#                        historical_commodity_data = db.query(HistoricalCommodityData).filter_by(commodity_id=commodity.id, date=date.date()).first()
+#                        if historical_commodity_data:
+#                            historical_commodity_data.close = row[commodity.symbol]
+#                        else:
+#                            historical_commodity_data = HistoricalCommodityData(
+#                                commodity_id=commodity.id,
+#                                date=date.date(),
+#                                close=row[commodity.symbol]
+#                            )
+#                            db.add(historical_commodity_data)
+#                        batch.append(historical_commodity_data)
+#                        if len(batch) >= batch_size:
+#                            db.commit()
+#                            print(f"Batch committed for {commodity.symbol} commodity data")
+#                            batch = []
+#                    except Exception as e:
+#                        db.rollback()  # 세션 롤백
+#                        print(f"Error processing {date.date()} for {commodity_info['symbol']}: {e}")
+#            except Exception as e:
+#                db.rollback()  # 세션 롤백
+#                print(f"Error saving historical data for {commodity_info['symbol']}: {e}")
+#
+#        # 남은 배치 커밋
+#        if batch:
+#            db.commit()
+#            print("Final batch committed for commodity data")
+#
+#    except Exception as e:
+#        db.rollback()
+#        print(f"Error updating commodity data: {e}")
+#    finally:
+#        db.close()
 
 def fetch_economic_data(api_key, series_id, start_date, end_date):
     url = f"https://api.stlouisfed.org/fred/series/observations"

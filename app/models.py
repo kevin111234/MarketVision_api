@@ -24,6 +24,7 @@ class Stock(Base):
     currency = Column(String(10), nullable=False)
 
     historical_data = relationship("HistoricalStockData", back_populates="stock")
+    financial_data = relationship("FinancialData", back_populates="stock") 
 
 
 class HistoricalStockData(Base):
@@ -68,31 +69,30 @@ class HistoricalStockIndexData(Base):
     __table_args__ = (UniqueConstraint('index_id', 'date', name='index_date_uc'),)
 
 
-class Commodity(Base):
-    __tablename__ = 'Commodity'
-
-    id = Column(Integer, primary_key=True, index=True)
-    symbol = Column(String(10), unique=True, nullable=False)
-    name = Column(String(100), nullable=False)
-
-    historical_data = relationship("HistoricalCommodityData", back_populates="commodity")
-
-
-class HistoricalCommodityData(Base):
-    __tablename__ = 'HistoricalCommodityData'
-
-    id = Column(Integer, primary_key=True, index=True)
-    commodity_id = Column(Integer, ForeignKey('Commodity.id', ondelete='CASCADE'), nullable=False)
-    date = Column(Date, nullable=False)
-    open = Column(Float, nullable=False)
-    high = Column(Float, nullable=False)
-    low = Column(Float, nullable=False)
-    close = Column(Float, nullable=False)
-    volume = Column(BigInteger, nullable=True)
-
-    commodity = relationship("Commodity", back_populates="historical_data")
-    __table_args__ = (UniqueConstraint('commodity_id', 'date', name='commodity_date_uc'),)
-
+# class Commodity(Base):
+#     __tablename__ = 'Commodity'
+# 
+#     id = Column(Integer, primary_key=True, index=True)
+#     symbol = Column(String(30), unique=True, nullable=False)
+#     name = Column(String(100), nullable=False)
+# 
+#     historical_data = relationship("HistoricalCommodityData", back_populates="commodity")
+# 
+# 
+# class HistoricalCommodityData(Base):
+#     __tablename__ = 'HistoricalCommodityData'
+# 
+#     id = Column(Integer, primary_key=True, index=True)
+#     commodity_id = Column(Integer, ForeignKey('Commodity.id', ondelete='CASCADE'), nullable=False)
+#     date = Column(Date, nullable=False)
+#     open = Column(Float, nullable=False)
+#     high = Column(Float, nullable=False)
+#     low = Column(Float, nullable=False)
+#     close = Column(Float, nullable=False)
+#     volume = Column(BigInteger, nullable=True)
+# 
+#     commodity = relationship("Commodity", back_populates="historical_data")
+#     __table_args__ = (UniqueConstraint('commodity_id', 'date', name='commodity_date_uc'),)
 
 class ExchangeRate(Base):
     __tablename__ = 'ExchangeRate'
@@ -122,3 +122,19 @@ class EconomicIndicator(Base):
     value = Column(Float, nullable=False)
 
     __table_args__ = (UniqueConstraint('indicator_type', 'date', name='indicator_date_uc'),)
+
+class FinancialData(Base):
+    __tablename__ = 'FinancialData'
+
+    id = Column(Integer, primary_key=True, index=True)
+    stock_id = Column(Integer, ForeignKey('Stock.id'), nullable=False)  # Stock 모델과 연관
+    date = Column(Date, nullable=False)
+    revenue = Column(Float)
+    net_income = Column(Float)
+    total_assets = Column(Float)
+    total_liabilities = Column(Float)
+    equity = Column(Float)
+    earnings_per_share = Column(Float)
+    debt_to_equity_ratio = Column(Float)
+
+    stock = relationship("Stock", back_populates="financial_data")
