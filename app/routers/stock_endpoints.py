@@ -66,8 +66,10 @@ def get_stock_graph(symbol: str, months: int = 3, db: Session = Depends(get_db))
 
     fig = go.Figure(go.Scatter(x=dates, y=closes, mode='lines', name='Close Price'))
     fig.update_layout(title=f"{stock.name} Price Over Last {months} Months",
-                      xaxis_title="Date",
-                      yaxis_title="Close Price")
+        xaxis_title="Date",
+        yaxis_title="Close Price",
+        hovermode="x"
+    )
     
     # JSON으로 변환할 때 Plotly 인코더 사용
     graph_json = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
