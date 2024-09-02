@@ -4,6 +4,8 @@ from datetime import datetime, timedelta
 import plotly.graph_objs as go
 from ..database import get_db
 from ..models import Stock, HistoricalStockData
+import plotly
+import json
 
 router = APIRouter()
 
@@ -67,4 +69,6 @@ def get_stock_graph(symbol: str, months: int = 3, db: Session = Depends(get_db))
                       xaxis_title="Date",
                       yaxis_title="Close Price")
     
-    return fig.to_json()
+    # JSON으로 변환할 때 Plotly 인코더 사용
+    graph_json = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
+    return {"symbol": symbol, "graph": graph_json}
