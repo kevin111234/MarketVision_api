@@ -19,7 +19,7 @@ def update_exchange_rate(db: Session, base_currency: str, target_currency: str, 
         exchange_rate_data = fdr.DataReader(fred_symbol, start=start_date, end=datetime.now())
 
         # 배치 커밋을 위해 리스트를 사용
-        batch_size = 100
+        batch_size = 1000
         batch = []
         for date, data in exchange_rate_data.iterrows():
             try:
@@ -80,7 +80,7 @@ def update_dollar_index():
         start_date = datetime(2000, 1, 1) if not last_saved_date else last_saved_date.date + timedelta(days=1)
         dollar_index_data = fdr.DataReader('^NYICDX', start=start_date, end=datetime.now())
 
-        batch_size = 100
+        batch_size = 1000
         batch = []
         for date, data in dollar_index_data.iterrows():
             try:
@@ -113,7 +113,7 @@ def ticker_update():
     print("Updating ticker data...")
     try:
         us_stocks = fdr.StockListing('NASDAQ')
-        batch_size = 100
+        batch_size = 1000
         batch = []
         for _, row in us_stocks.iterrows():
             try:
@@ -163,7 +163,7 @@ def stock_data_update():
     print("Updating stock data...")
     try:
         stocks = db.query(Stock).all()
-        batch_size = 100
+        batch_size = 5000
         batch = []
         for stock in stocks:
             try:
@@ -244,7 +244,7 @@ def stock_index_update():
     ]
 
     try:
-        batch_size = 100
+        batch_size = 3000
         batch = []
         for index_info in indices:
             try:
@@ -300,85 +300,6 @@ def stock_index_update():
     finally:
         db.close()
 
-#def commodity_data_update():
-#    db = next(get_db())
-#    print("Updating commodity data...")
-#    
-#    commodities = [
-#        {'symbol': 'GOLDAMGBD228NLBM', 'name': 'Gold'},
-#        {'symbol': 'SILVERPRICE', 'name': 'Silver'},
-#        {'symbol': 'DCOILWTICO', 'name': 'Crude Oil'},
-#        {'symbol': 'DHHNGSP', 'name': 'Natural Gas'},
-#        {'symbol': 'PCOPPUSDM', 'name': 'Copper'},
-#        {'symbol': 'PLATINUM', 'name': 'Platinum'},
-#        {'symbol': 'PALLADIUM', 'name': 'Palladium'}
-#    ]
-#
-#    try:
-#        batch_size = 100
-#        batch = []
-#        for commodity_info in commodities:
-#            try:
-#                commodity = db.query(Commodity).filter_by(symbol=commodity_info['symbol']).first()
-#                if not commodity:
-#                    commodity = Commodity(
-#                        symbol=commodity_info['symbol'],
-#                        name=commodity_info['name']
-#                    )
-#                    db.add(commodity)
-#                    db.commit()
-#
-#                last_saved_date = db.query(HistoricalCommodityData).filter_by(commodity_id=commodity.id).order_by(HistoricalCommodityData.date.desc()).first()
-#                start_date = datetime(2000, 1, 1) if not last_saved_date else last_saved_date.date + timedelta(days=1)
-#                
-#                # FRED에서 데이터 가져오기
-#                commodity_data = pdr.DataReader(commodity.symbol, 'fred', start=start_date, end=datetime.now())
-#
-#                # NaN 값을 포함한 행 찾기
-#                nan_rows = commodity_data[commodity_data.isna().any(axis=1)]
-#                if not nan_rows.empty:
-#                    print(f"NaN 값을 포함한 행이 발견되었습니다: {commodity_info['symbol']}")
-#                    print(nan_rows)
-#
-#                # NaN 값을 포함한 행 제거
-#                commodity_data = commodity_data.dropna()
-#
-#                # 데이터 처리 및 저장
-#                for date, row in commodity_data.iterrows():
-#                    try:
-#                        historical_commodity_data = db.query(HistoricalCommodityData).filter_by(commodity_id=commodity.id, date=date.date()).first()
-#                        if historical_commodity_data:
-#                            historical_commodity_data.close = row[commodity.symbol]
-#                        else:
-#                            historical_commodity_data = HistoricalCommodityData(
-#                                commodity_id=commodity.id,
-#                                date=date.date(),
-#                                close=row[commodity.symbol]
-#                            )
-#                            db.add(historical_commodity_data)
-#                        batch.append(historical_commodity_data)
-#                        if len(batch) >= batch_size:
-#                            db.commit()
-#                            print(f"Batch committed for {commodity.symbol} commodity data")
-#                            batch = []
-#                    except Exception as e:
-#                        db.rollback()  # 세션 롤백
-#                        print(f"Error processing {date.date()} for {commodity_info['symbol']}: {e}")
-#            except Exception as e:
-#                db.rollback()  # 세션 롤백
-#                print(f"Error saving historical data for {commodity_info['symbol']}: {e}")
-#
-#        # 남은 배치 커밋
-#        if batch:
-#            db.commit()
-#            print("Final batch committed for commodity data")
-#
-#    except Exception as e:
-#        db.rollback()
-#        print(f"Error updating commodity data: {e}")
-#    finally:
-#        db.close()
-
 def fetch_economic_data(api_key, series_id, start_date, end_date):
     url = f"https://api.stlouisfed.org/fred/series/observations"
     params = {
@@ -405,7 +326,7 @@ def update_economic_indicators():
             {'type': 'GDP Growth Rate', 'series_id': 'GDP'}
         ]
 
-        batch_size = 100
+        batch_size = 1000
         batch = []
         for indicator in indicators:
             try:
